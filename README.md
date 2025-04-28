@@ -1,50 +1,69 @@
-# Welcome to your Expo app 👋
+# Habit Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A simple mobile app to track daily habits and view progress.
 
-## Get started
+## Scope
 
-1. Install dependencies
+- Be able to add a daily habit I want to track
+- Be able to track the habit for a day
+- Be able to view the history of the habit
+- See the streak for that habit
+- Be able to edit/delete habits
 
-   ```bash
+## Tech Stack
+
+- React Native
+- Expo
+- TypeScript
+- Firebase
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies:
+   ```
    npm install
    ```
+3. Create a Firebase project:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project
+   - Add a Web App to your project
+   - Copy the Firebase configuration
+   - Update the `config/firebase.ts` file with your Firebase configuration
 
-2. Start the app
-
-   ```bash
-    npx expo start
+4. Start the development server:
+   ```
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+5. Run on a device or emulator:
+   - For Android: `npm run android`
+   - For iOS: `npm run ios`
+   - For web: `npm run web`
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Usage
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- **Habits Tab**: Add new habits and mark them complete for today
+- **History Tab**: View your habit completion history for the last 7 days
 
-## Get a fresh project
+## Features
 
-When you're ready, run:
+- Add new habits
+- Track daily habit completion
+- Visualize streaks for each habit
+- View 7-day history for all habits
+- Delete habits
 
-```bash
-npm run reset-project
-```
+## Future Enhancements
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- User authentication
+- More detailed habit analytics
+- Custom habit schedules (e.g., weekly, monthly)
+- Reminders and notifications
+- Themes and customization
 
-## Learn more
+## Advanced Features
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Notifications
+- Add habits to different categories
+- Support different habit frequencies (daily, weekly, specific days)
