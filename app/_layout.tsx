@@ -12,6 +12,7 @@ import React from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { HabitsProvider } from '../context/HabitsContext';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { GeminiProvider } from '../context/GeminiContext';
 import LoadingScreen from './components/LoadingScreen';
 
 // Import global CSS for web platform
@@ -78,9 +79,14 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
 
   useEffect(() => {
     if (loaded) {
@@ -96,16 +102,18 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.container}>
       <AuthProvider>
         <HabitsProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <AuthGuard>
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="auth" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-            </AuthGuard>
-            <StatusBar style="auto" />
-          </ThemeProvider>
+          <GeminiProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <AuthGuard>
+                <Stack>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="auth" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+              </AuthGuard>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </GeminiProvider>
         </HabitsProvider>
       </AuthProvider>
     </GestureHandlerRootView>

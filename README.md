@@ -9,6 +9,7 @@ A simple mobile app to track daily habits and view progress.
 - Be able to view the history of the habit
 - See the streak for that habit
 - Be able to edit/delete habits
+- Chat with Gemini AI about your habit progress
 
 ## Tech Stack
 
@@ -16,6 +17,7 @@ A simple mobile app to track daily habits and view progress.
 - Expo
 - TypeScript
 - Firebase
+- Google Gemini AI
 
 ## Getting Started
 
@@ -31,12 +33,19 @@ A simple mobile app to track daily habits and view progress.
    - Copy the Firebase configuration
    - Update the `config/firebase.ts` file with your Firebase configuration
 
-4. Start the development server:
+4. Set up Google Gemini AI:
+   - Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/)
+   - Create a `.env` file in the root directory with the following content:
+     ```
+     EXPO_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
+     ```
+
+5. Start the development server:
    ```
    npm start
    ```
 
-5. Run on a device or emulator:
+6. Run on a device or emulator:
    - For Android: `npm run android`
    - For iOS: `npm run ios`
    - For web: `npm run web`
@@ -45,6 +54,7 @@ A simple mobile app to track daily habits and view progress.
 
 - **Habits Tab**: Add new habits and mark them complete for today
 - **History Tab**: View your habit completion history for the last 7 days
+- **AI Chat**: Click the chat bubble button to interact with Google Gemini AI about your habits
 
 ## Features
 
@@ -53,6 +63,7 @@ A simple mobile app to track daily habits and view progress.
 - Visualize streaks for each habit
 - View 7-day history for all habits
 - Delete habits
+- AI-powered habit insights and recommendations
 
 ## Future Enhancements
 
