@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, Timestamp, orderBy } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, auth } from '../app/config/firebase';
 import { Habit } from '../types/habit';
+import { useAuth } from './AuthContext';
 
 interface HabitsContextProps {
   habits: Habit[];
@@ -29,17 +30,33 @@ interface HabitsProviderProps {
 export const HabitsProvider = ({ children }: HabitsProviderProps) => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   const fetchHabits = async () => {
     try {
+      setLoading(true);
+      
+      if (!user) {
+        setHabits([]);
+        return;
+      }
+      
       const habitsCollection = collection(db, 'habits');
-      const habitSnapshot = await getDocs(query(habitsCollection, orderBy('position', 'asc')));
+      const habitSnapshot = await getDocs(
+        query(
+          habitsCollection, 
+          where('userId', '==', user.uid),
+          orderBy('position', 'asc')
+        )
+      );
+      
       const habitsList = habitSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         position: doc.data().position || 0,
         created: doc.data().created?.toDate() || new Date(),
       })) as Habit[];
+      
       setHabits(habitsList);
     } catch (error) {
       console.error('Error fetching habits: ', error);
@@ -49,11 +66,18 @@ export const HabitsProvider = ({ children }: HabitsProviderProps) => {
   };
 
   useEffect(() => {
-    fetchHabits();
-  }, []);
+    if (user) {
+      fetchHabits();
+    } else {
+      setHabits([]);
+      setLoading(false);
+    }
+  }, [user]);
 
   const addHabit = async (name: string) => {
     try {
+      if (!user) return;
+      
       const maxPosition = habits.length > 0 
         ? Math.max(...habits.map(h => h.position || 0)) 
         : 0;
@@ -61,6 +85,7 @@ export const HabitsProvider = ({ children }: HabitsProviderProps) => {
       const habitsCollection = collection(db, 'habits');
       await addDoc(habitsCollection, {
         name,
+        userId: user.uid,
         created: Timestamp.now(),
         streak: 0,
         completedDates: [],
@@ -74,6 +99,8 @@ export const HabitsProvider = ({ children }: HabitsProviderProps) => {
 
   const deleteHabit = async (id: string) => {
     try {
+      if (!user) return;
+      
       const habitDoc = doc(db, 'habits', id);
       await deleteDoc(habitDoc);
       setHabits(habits.filter(habit => habit.id !== id));
@@ -84,6 +111,8 @@ export const HabitsProvider = ({ children }: HabitsProviderProps) => {
 
   const reorderHabits = async (reorderedHabits: Habit[]) => {
     try {
+      if (!user) return;
+      
       setHabits(reorderedHabits);
       
       const updates = reorderedHabits.map(async (habit, index) => {
@@ -100,10 +129,12 @@ export const HabitsProvider = ({ children }: HabitsProviderProps) => {
 
   const toggleHabitCompletion = async (habitId: string, date: string) => {
     try {
+      if (!user) return;
+      
       const habit = habits.find(h => h.id === habitId);
       if (!habit) return;
 
-      const habitRef = doc(db, 'habits', habitId);
+      const habitRef = doc(db, 'habits', habit.id);
       const completedDates = [...habit.completedDates];
       
       const dateIndex = completedDates.findIndex(d => d === date);

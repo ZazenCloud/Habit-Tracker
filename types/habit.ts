@@ -1,6 +1,7 @@
 export interface Habit {
   id: string;
   name: string;
+  userId: string;
   created: Date;
   streak: number;
   completedDates: string[]; // dates in ISO format

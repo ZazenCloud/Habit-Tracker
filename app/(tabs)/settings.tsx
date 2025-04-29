@@ -2,6 +2,7 @@ import { StyleSheet, View, Text, TextInput, TouchableOpacity, Platform, Pressabl
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../../context/HabitsContext';
+import { useAuth } from '../../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Gesture } from 'react-native-gesture-handler';
 import ReorderableList, { 
@@ -278,6 +279,7 @@ const WebDraggableItem = React.memo(({
 
 export default function SettingsScreen() {
   const { habits, addHabit, deleteHabit, reorderHabits } = useHabits();
+  const { user, logout } = useAuth();
   const [newHabitName, setNewHabitName] = useState('');
   // For web drag-and-drop
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -430,6 +432,14 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -437,6 +447,19 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.content}>
+        <View style={styles.userSection}>
+          <Text style={styles.userName}>
+            {user?.displayName ? `Hello, ${user.displayName}` : 'Hello'}
+          </Text>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>Logout</Text>
+            <Ionicons name="log-out-outline" size={18} color="#FF3B30" />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.addHabitSection}>
           <Text style={styles.sectionTitle}>Add New Habit</Text>
           <View style={styles.addHabitForm}>
@@ -672,5 +695,39 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  userSection: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+  },
+  logoutButtonText: {
+    color: '#FF3B30',
+    fontWeight: '600',
+    marginRight: 6,
   },
 }); 
