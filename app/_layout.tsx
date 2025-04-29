@@ -6,10 +6,21 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { HabitsProvider } from '../context/HabitsContext';
+
+// Import global CSS for web platform
+if (Platform.OS === 'web') {
+  // Need to use require for CSS imports on React Native Web
+  try {
+    require('../app/global.css');
+    console.log('Successfully imported global.css');
+  } catch (e) {
+    console.error('Error importing global.css:', e);
+  }
+}
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

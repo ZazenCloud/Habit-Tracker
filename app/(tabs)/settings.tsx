@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Platform, Pressable, FlatList } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, Platform, Pressable, FlatList, Alert, Modal } from 'react-native';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../../context/HabitsContext';
@@ -14,6 +14,53 @@ import { Habit } from '../../types/habit';
 import * as Haptics from 'expo-haptics';
 import { runOnJS } from 'react-native-reanimated';
 
+// Add DeleteConfirmationModal component
+const DeleteConfirmationModal = ({ 
+  isVisible, 
+  habitName, 
+  onConfirm, 
+  onCancel 
+}: { 
+  isVisible: boolean; 
+  habitName: string; 
+  onConfirm: () => void; 
+  onCancel: () => void; 
+}) => {
+  if (Platform.OS !== 'web') return null;
+
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onCancel}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Delete Habit</Text>
+          <Text style={styles.modalMessage}>
+            Are you sure you want to delete "{habitName}"?
+          </Text>
+          <View style={styles.modalButtons}>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.cancelButton]} 
+              onPress={onCancel}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.modalDeleteButton]} 
+              onPress={onConfirm}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 // Create a separate component for the habit item that works with ReorderableList
 const HabitListItem = React.memo(({ 
   item, 
@@ -24,6 +71,38 @@ const HabitListItem = React.memo(({
 }) => {
   const drag = useReorderableDrag();
   const isActive = useIsActive();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
+  const handleDelete = useCallback(() => {
+    if (Platform.OS === 'web') {
+      setShowDeleteModal(true);
+    } else {
+      Alert.alert(
+        'Delete Habit',
+        `Are you sure you want to delete "${item.name}"?`,
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Delete',
+            onPress: () => onDelete(item.id),
+            style: 'destructive'
+          }
+        ]
+      );
+    }
+  }, [item, onDelete]);
+
+  const handleConfirmDelete = useCallback(() => {
+    setShowDeleteModal(false);
+    onDelete(item.id);
+  }, [item.id, onDelete]);
+
+  const handleCancelDelete = useCallback(() => {
+    setShowDeleteModal(false);
+  }, []);
   
   // Simplified drag handler to be more reliable
   const onLongPressHandler = useCallback(() => {
@@ -42,29 +121,39 @@ const HabitListItem = React.memo(({
   }, [drag]);
   
   return (
-    <View style={[
-      styles.habitItem,
-      isActive && styles.habitItemActive
-    ]}>
-      <View style={styles.habitItemContent}>
-        <Pressable 
-          onLongPress={onLongPressHandler}
-          delayLongPress={200}
-          style={({ pressed }) => [
-            styles.dragHandleContainer,
-            pressed && styles.dragHandlePressed
-          ]}
-        >
-          <Ionicons name="reorder-three" size={28} color="#666" />
-        </Pressable>
-        <Text style={styles.habitName}>{item.name}</Text>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => onDelete(item.id)}>
-          <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-        </TouchableOpacity>
+    <>
+      <View style={[
+        styles.habitItem,
+        isActive && styles.habitItemActive
+      ]}>
+        <View style={styles.habitItemContent}>
+          <Pressable 
+            onLongPress={onLongPressHandler}
+            delayLongPress={200}
+            style={({ pressed }) => [
+              styles.dragHandleContainer,
+              pressed && styles.dragHandlePressed
+            ]}
+          >
+            <Ionicons name="reorder-three" size={28} color="#666" />
+          </Pressable>
+          <Text style={styles.habitName}>{item.name}</Text>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+      {Platform.OS === 'web' && (
+        <DeleteConfirmationModal
+          isVisible={showDeleteModal}
+          habitName={item.name}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
+      )}
+    </>
   );
 });
 
@@ -84,6 +173,21 @@ const WebDraggableItem = React.memo(({
   onDragOver: (index: number) => void;
   onDrop: () => void;
 }) => {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDelete = useCallback(() => {
+    setShowDeleteModal(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    setShowDeleteModal(false);
+    onDelete(item.id);
+  }, [item.id, onDelete]);
+
+  const handleCancelDelete = useCallback(() => {
+    setShowDeleteModal(false);
+  }, []);
+
   // Create refs for the drag element
   const itemRef = useRef<View>(null);
   
@@ -92,26 +196,48 @@ const WebDraggableItem = React.memo(({
       const element = itemRef.current as unknown as HTMLElement;
       
       element.setAttribute('draggable', 'true');
-      
-      // Apply cursor style directly to the element
+      // Set cursor style directly on the HTML element
       element.style.cursor = 'grab';
       
       element.ondragstart = (e) => {
+        // Set the data transfer to enable drag operation
         e.dataTransfer?.setData('text/plain', index.toString());
-        // Add styling to indicate drag start
+        
+        // Create a minimal drag image that won't show
+        if (e.dataTransfer) {
+          // Create an invisible 1x1 pixel image to use as drag image
+          const emptyImg = document.createElement('img');
+          emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+          emptyImg.style.opacity = '0';
+          document.body.appendChild(emptyImg);
+          
+          // Set this as the drag image
+          e.dataTransfer.setDragImage(emptyImg, 0, 0);
+          
+          // Remove the element after a short delay
+          setTimeout(() => {
+            document.body.removeChild(emptyImg);
+          }, 0);
+        }
+        
+        // Visual feedback for drag operation
         element.style.opacity = '0.6';
+        // Change cursor to grabbing during drag
         element.style.cursor = 'grabbing';
+        
+        // Start the drag operation
         onDragStart(index);
       };
       
       element.ondragend = () => {
-        // Reset styling
+        // Reset opacity when drag ends
         element.style.opacity = '1';
+        // Reset cursor to grab
         element.style.cursor = 'grab';
       };
       
       element.ondragover = (e) => {
-        e.preventDefault(); // Necessary to allow drop
+        e.preventDefault(); // Must call preventDefault to allow drop
         onDragOver(index);
       };
       
@@ -123,22 +249,30 @@ const WebDraggableItem = React.memo(({
   }, [index, onDragStart, onDragOver, onDrop]);
   
   return (
-    <View 
-      ref={itemRef}
-      style={styles.habitItem}
-    >
-      <View style={styles.habitItemContent}>
-        <View style={styles.dragHandleContainer}>
-          <Ionicons name="reorder-three" size={28} color="#666" />
+    <>
+      <View 
+        ref={itemRef}
+        style={styles.habitItem}
+      >
+        <View style={styles.habitItemContent}>
+          <View style={styles.dragHandleContainer}>
+            <Ionicons name="reorder-three" size={28} color="#666" />
+          </View>
+          <Text style={styles.habitName}>{item.name}</Text>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+          </TouchableOpacity>
         </View>
-        <Text style={styles.habitName}>{item.name}</Text>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => onDelete(item.id)}>
-          <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-        </TouchableOpacity>
       </View>
-    </View>
+      <DeleteConfirmationModal
+        isVisible={showDeleteModal}
+        habitName={item.name}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+    </>
   );
 });
 
@@ -148,6 +282,21 @@ export default function SettingsScreen() {
   // For web drag-and-drop
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+
+  // Simple cleanup handler for web platform
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleDragEnd = () => {
+        document.body.style.cursor = '';
+      };
+      
+      window.addEventListener('dragend', handleDragEnd);
+      
+      return () => {
+        window.removeEventListener('dragend', handleDragEnd);
+      };
+    }
+  }, []);
 
   const triggerHapticFeedback = useCallback(() => {
     if (Platform.OS === 'ios') {
@@ -175,10 +324,20 @@ export default function SettingsScreen() {
   // Web-specific drag handlers
   const handleWebDragStart = useCallback((index: number) => {
     setDraggedIndex(index);
+    
+    // Set cursor for the entire document during drag
+    if (Platform.OS === 'web') {
+      document.body.style.cursor = 'grabbing';
+    }
   }, []);
   
   const handleWebDragOver = useCallback((index: number) => {
     setDropIndex(index);
+    
+    // Ensure cursor remains grabbing during dragover
+    if (Platform.OS === 'web') {
+      document.body.style.cursor = 'grabbing';
+    }
   }, []);
   
   const handleWebDrop = useCallback(() => {
@@ -186,6 +345,11 @@ export default function SettingsScreen() {
       // Reorder the habits
       const reorderedHabits = reorderItems(habits, draggedIndex, dropIndex);
       reorderHabits(reorderedHabits);
+    }
+    
+    // Reset cursor
+    if (Platform.OS === 'web') {
+      document.body.style.cursor = '';
     }
     
     // Reset drag state
@@ -447,5 +611,66 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     padding: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333',
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f1f1f1',
+  },
+  modalDeleteButton: {
+    backgroundColor: '#FF3B30',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 }); 

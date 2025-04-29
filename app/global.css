@@ -1,0 +1,17 @@
+/* Minimal global CSS styles for web platform cursors */
+
+/* Style for draggable elements to show grab cursor */
+[draggable="true"] {
+  cursor: grab;
+}
+
+/* When actively dragging, show grabbing cursor */
+[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Hide default drag ghost image */
+[draggable="true"] img {
+  -webkit-user-drag: none;
+  user-drag: none;
+} 
