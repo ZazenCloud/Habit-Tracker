@@ -4,11 +4,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useHabits } from '../../context/HabitsContext';
 import HabitItem from '../../components/HabitItem';
 import { Habit } from '../../types/habit';
+import { getLocalDateString } from '../../utils/dateUtils';
 
 export default function HabitsScreen() {
   const { habits, loading, toggleHabitCompletion } = useHabits();
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString(new Date());
   
   const isHabitCompletedToday = (habitId: string) => {
     const habit = habits.find(h => h.id === habitId);

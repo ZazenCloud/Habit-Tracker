@@ -14,6 +14,7 @@ import { HabitsProvider } from '../context/HabitsContext';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { GeminiProvider } from '../context/GeminiContext';
 import LoadingScreen from './components/LoadingScreen';
+import WebResponsiveContainer from '../components/WebResponsiveContainer';
 
 // Import global CSS for web platform
 if (Platform.OS === 'web') {
@@ -104,14 +105,16 @@ export default function RootLayout() {
         <HabitsProvider>
           <GeminiProvider>
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <AuthGuard>
-                <Stack>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="auth" options={{ headerShown: false }} />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-              </AuthGuard>
-              <StatusBar style="auto" />
+              <WebResponsiveContainer>
+                <AuthGuard>
+                  <Stack>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="auth" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                </AuthGuard>
+                <StatusBar style="auto" />
+              </WebResponsiveContainer>
             </ThemeProvider>
           </GeminiProvider>
         </HabitsProvider>

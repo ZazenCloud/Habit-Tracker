@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, T
 import { db, auth } from '../app/config/firebase';
 import { Habit } from '../types/habit';
 import { useAuth } from './AuthContext';
+import { getLocalDateString } from '../utils/dateUtils';
 
 interface HabitsContextProps {
   habits: Habit[];
@@ -148,14 +149,14 @@ export const HabitsProvider = ({ children }: HabitsProviderProps) => {
       const sortedDates = [...completedDates].sort();
       let streak = 0;
       
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateString(new Date());
       if (sortedDates.includes(today)) {
         streak = 1;
         let checkDate = new Date();
         
         while (true) {
           checkDate.setDate(checkDate.getDate() - 1);
-          const dateStr = checkDate.toISOString().split('T')[0];
+          const dateStr = getLocalDateString(checkDate);
           if (sortedDates.includes(dateStr)) {
             streak++;
           } else {

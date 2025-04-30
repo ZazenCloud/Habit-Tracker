@@ -35,7 +35,7 @@ const ChatButton: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 80,
     right: 20,
     zIndex: 999,
   },
